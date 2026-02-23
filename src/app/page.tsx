@@ -80,7 +80,7 @@ export default function Page() {
           >
             <div className="grid2">
 
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <p className="p" style={{ marginTop: 0 }}>
                   La parte bonita (y sí, se llora)
                 </p>
@@ -106,7 +106,7 @@ export default function Page() {
                 </div>
               </RevealOnce>
 
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <div className="kicker">Aviso serio (pero no mucho)</div>
                 <div style={{ fontFamily: "var(--font-lux)", fontSize: 24, lineHeight: 1.2, textAlign: "center", marginTop: 10 }}>
                   “Si llegas tarde… te aplaudimos igualmente, pero bajito.”  <p className="p">😁</p>
@@ -127,7 +127,7 @@ export default function Page() {
           >
             <div className="grid2">
               {/* IZQUIERDA: imagen */}
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <p className="p" style={{ marginTop: 0 }}>
                   La celebración será en <b>Espacio Capitana</b>, en <b>Isla Cristina (Huelva)</b>,
                   a las <b>14:00</b>. A partir de aquí, todo son buenas decisiones.
@@ -155,7 +155,7 @@ export default function Page() {
               </RevealOnce>
 
               {/* DERECHA: texto */}
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <div className="kicker">Plan del día (versión realista)</div>
                 <ul style={{ color: "var(--muted)", lineHeight: 1.9, paddingLeft: 18, marginBottom: 50 }}>
                   <li><b>Llegas</b> y saludas como si conocieras a todo el mundo.</li>
@@ -266,7 +266,7 @@ export default function Page() {
             title="Regalo"
           >
             <div className="grid2">
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <p className="p" style={{ marginTop: 0 }}>
                   Lo más importante es que vengas y lo pases brutal. Pero si te apetece ayudarnos con la luna de miel, la boda, la casa, los niños(que ya vendrán) o lo que tú quieras... 
                   aquí tienes la opción más cómoda 😄
@@ -289,7 +289,7 @@ export default function Page() {
                 <a className="btn btnPrimary" href="#rsvp">Confirmar asistencia</a>
               </RevealOnce>
 
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <div className="kicker">Para los detallistas</div>
                 <p className="p" style={{ marginTop: 10 }}>
                   Si prefieres algo “de toda la vida”, un sobre, una sorpresa o un detalle personal… también nos encanta.
@@ -315,7 +315,7 @@ export default function Page() {
             title="Dresscode"
           >
             <div className="grid2">
-              <RevealOnce className="" style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding" >
                 <p className="p" style={{ marginTop: 0 }}>
                   Queremos un ambiente elegante pero cómodo. O sea: <b>arreglado/a</b>, pero sin sufrir.
                 </p>
