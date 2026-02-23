@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <!-- blanco = visible (pintura), negro = agujero (se ve la foto) -->
+  <rect width="1000" height="1000" fill="white"></rect>
+
+  <!-- agujero principal irregular -->
+  <path fill="black" d="
+    M500 150
+    C640 140 820 250 850 420
+    C885 615 720 815 520 850
+    C295 888 120 720 150 520
+    C175 300 330 160 500 150 Z
+  "></path>
+
+  <!-- salpicaduras (agujeritos alrededor) -->
+  <circle cx="260" cy="310" r="20" fill="black"></circle>
+  <circle cx="735" cy="285" r="14" fill="black"></circle>
+  <circle cx="840" cy="520" r="16" fill="black"></circle>
+  <circle cx="205" cy="610" r="14" fill="black"></circle>
+  <circle cx="330" cy="820" r="12" fill="black"></circle>
+  <circle cx="705" cy="790" r="10" fill="black"></circle>
+  <circle cx="615" cy="220" r="10" fill="black"></circle>
+  <circle cx="405" cy="230" r="9" fill="black"></circle>
+  <circle cx="870" cy="410" r="9" fill="black"></circle>
+  <circle cx="140" cy="430" r="9" fill="black"></circle>
+</svg>

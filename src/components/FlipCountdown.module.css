@@ -1,0 +1,180 @@
+.wrap{
+  display: grid;
+  gap: 14px;
+}
+
+.header{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kicker{
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sub{
+  font-family: var(--font-lux), serif;
+  color: rgba(31,35,32,.72);
+  letter-spacing: .10em;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 430px){
+  .grid{ gap: 8px; }
+}
+
+/* Unidad */
+.unit{
+  display:grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+/* Tarjeta */
+.card{
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 92px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(120px 70px at 30% 10%, rgba(176,141,115,.18), transparent 55%),
+    radial-gradient(120px 70px at 70% 90%, rgba(110,127,87,.16), transparent 55%),
+    rgba(255,255,255,.72);
+  box-shadow: 0 14px 45px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+
+/* Línea central */
+.card::after{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  top:50%;
+  height: 1px;
+  background: rgba(31,35,32,.14);
+  transform: translateY(-.5px);
+}
+
+/* Mitades */
+.half{
+  position:absolute;
+  left:0; right:0;
+  height:50%;
+  overflow:hidden;
+
+  display:flex;
+  justify-content:center;
+  padding-inline: 10px;
+}
+
+.top{
+  top:0;
+  align-items:flex-end; /* clave: pegamos el número al borde inferior */
+}
+
+.bottom{
+  bottom:0;
+  align-items:flex-start; /* clave: pegamos el número al borde superior */
+}
+
+.num{
+  width: var(--w, 2ch);
+  text-align:center;
+  font-family: var(--font-lux), serif;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: .06em;
+  color: var(--accent);
+  text-shadow: 0 1px 0 rgba(255,255,255,.65);
+}
+
+/* Para que la mitad inferior parezca “más oscura” */
+.numTop{
+  transform: translateY(50%);
+}
+
+.numBottom{
+  transform: translateY(-50%);
+}
+
+/* Flaps animados */
+.flap{
+  position:absolute;
+  left:0; right:0;
+  height:50%;
+  overflow:hidden;
+
+  display:flex;
+  justify-content:center;
+  padding-inline: 10px;
+
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+
+  opacity: 0;            /* clave: ocultos por defecto */
+  pointer-events: none;
+}
+
+.play .flap{
+  opacity: 1;            /* solo visibles cuando animan */
+}
+
+.topFlap{
+  top:0;
+  align-items:flex-end;  /* igual que top */
+  transform-origin: bottom;
+  transform: rotateX(0deg);
+  background: linear-gradient(to bottom, rgba(255,255,255,.35), rgba(255,255,255,.00));
+}
+
+.bottomFlap{
+  bottom:0;
+  align-items:flex-start; /* igual que bottom */
+  transform-origin: top;
+  transform: rotateX(90deg);
+  background: linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.00));
+}
+
+/* Animación */
+.play .topFlap{
+  animation: flipTop 720ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+.play .bottomFlap{
+  animation: flipBottom 720ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes flipTop{
+  0%{ transform: rotateX(0deg); }
+  100%{ transform: rotateX(-90deg); }
+}
+@keyframes flipBottom{
+  0%{ transform: rotateX(90deg); }
+  100%{ transform: rotateX(0deg); }
+}
+
+.label{
+  font-size: 12px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Accesibilidad: respeta reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .play .topFlap, .play .bottomFlap{ animation: none; }
+  .bottomFlap{ transform: rotateX(0deg); }
+}
