@@ -26,7 +26,6 @@ export default function MapSection() {
                 height="100%"
                 style={{ border: 0 }}
                 loading="lazy"
-                allowFullScreen=""
                 referrerPolicy="no-referrer-when-downgrade"
                 src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBXQ6mVkXs9Q6xfW8H6-9YpVm8xPW8J9kk&q=Parroquia+Nuestra+Señora+del+Mar+Isla+Cristina+Huelva`}
               /> */}
@@ -62,7 +61,6 @@ export default function MapSection() {
                 height="100%"
                 style={{ border: 0 }}
                 loading="lazy"
-                allowFullScreen=""
                 referrerPolicy="no-referrer-when-downgrade"
                 src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBXQ6mVkXs9Q6xfW8H6-9YpVm8xPW8J9kk&q=Espacio+Capitana+Isla+Cristina+Huelva`}
               />

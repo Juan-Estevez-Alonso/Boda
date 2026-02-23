@@ -6,19 +6,24 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-export default function ScrollReveal({
-  as: Tag = "div",
-  className = "",
-  children,
-  start = 0.85, // empieza cuando el top está al 85% del viewport
-  end = 0.25,   // completo cuando el top llega al 25% del viewport
-}: {
-  as?: keyof JSX.IntrinsicElements;
+type ScrollRevealProps<T extends React.ElementType = "div"> = {
+  as?: T;
   className?: string;
   children: React.ReactNode;
-  start?: number;
-  end?: number;
-}) {
+  start?: number; // empieza cuando el top está al 85% del viewport
+  end?: number;   // completo cuando el top llega al 25% del viewport
+} & Omit<React.ComponentPropsWithoutRef<T>, "as" | "children" | "className">;
+
+export default function ScrollReveal<T extends React.ElementType = "div">({
+  as,
+  className = "",
+  children,
+  start = 0.85,
+  end = 0.25,
+  ...rest
+}: ScrollRevealProps<T>) {
+  const Tag = (as || "div") as React.ElementType;
+
   const ref = useRef<HTMLElement | null>(null);
   const raf = useRef<number | null>(null);
 

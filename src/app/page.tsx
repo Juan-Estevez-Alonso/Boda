@@ -238,7 +238,7 @@ export default function Page() {
             <a className="btn btnPrimary" href="#mapa">Ver ubicaciones</a>
           </RevealOnce>
 
-              <RevealOnce style={{ padding: 16 }}>
+              <RevealOnce className="revealPadding">
                 <div className="kicker">Notas rápidas</div>
                 <ul style={{ color: "var(--muted)", lineHeight: 1.9, paddingLeft: 18, marginBottom: 14 }}>
                   <li>Llega 10–15 min antes a la iglesia (nivel pro).</li>

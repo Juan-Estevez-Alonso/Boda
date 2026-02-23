@@ -1,21 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-type Props<T extends keyof JSX.IntrinsicElements> = {
+type RevealOnceProps<T extends React.ElementType = "div"> = {
   as?: T;
+  threshold?: number;
   className?: string;
   children: React.ReactNode;
-  threshold?: number;
-};
+} & Omit<React.ComponentPropsWithoutRef<T>, "as" | "children" | "className">;
 
-export default function RevealOnce<T extends keyof JSX.IntrinsicElements = "div">({
+export default function RevealOnce<T extends React.ElementType = "div">({
   as,
   className = "",
   children,
   threshold = 0.25,
-}: Props<T>) {
-  const Tag = (as || "div") as any;
+  ...rest
+}: RevealOnceProps<T>) {
+  const Tag = (as || "div") as React.ElementType;
+
   const ref = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState(false);
 
