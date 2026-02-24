@@ -80,7 +80,7 @@ export default function Page() {
           >
             <div className="grid2">
 
-              <RevealOnce className="revealPadding">
+              <RevealOnce className="revealPadding" >
                 <p className="p" style={{ marginTop: 0 }}>
                   La parte bonita (y sí, se llora)
                 </p>
@@ -238,7 +238,7 @@ export default function Page() {
             <a className="btn btnPrimary" href="#mapa">Ver ubicaciones</a>
           </RevealOnce>
 
-              <RevealOnce className="revealPadding">
+              <RevealOnce style={{ padding: 16 }}>
                 <div className="kicker">Notas rápidas</div>
                 <ul style={{ color: "var(--muted)", lineHeight: 1.9, paddingLeft: 18, marginBottom: 14 }}>
                   <li>Llega 10–15 min antes a la iglesia (nivel pro).</li>
@@ -315,7 +315,7 @@ export default function Page() {
             title="Dresscode"
           >
             <div className="grid2">
-              <RevealOnce className="revealPadding" >
+              <RevealOnce className="revealPadding">
                 <p className="p" style={{ marginTop: 0 }}>
                   Queremos un ambiente elegante pero cómodo. O sea: <b>arreglado/a</b>, pero sin sufrir.
                 </p>

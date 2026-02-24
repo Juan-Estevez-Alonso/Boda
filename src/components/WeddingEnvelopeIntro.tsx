@@ -21,12 +21,18 @@ export default function WeddingEnvelopeIntro() {
 
   // Bloquea scroll mientras el overlay está activo
   useEffect(() => {
-    const prev = document.body.style.overflow;
+  const prev = document.body.style.overflow;
+
+  if (!gone) {
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
+  } else {
+    document.body.style.overflow = prev || "";
+  }
+
+  return () => {
+    document.body.style.overflow = prev;
+  };
+}, [gone]);
 
   // Dust solo en cliente (evita hydration mismatch)
   useEffect(() => {
