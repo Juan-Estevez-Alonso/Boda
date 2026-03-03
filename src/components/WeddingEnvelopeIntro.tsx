@@ -1,235 +1,334 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./WeddingEnvelopeIntro.module.css";
+import WaxSeal from "@/components/WaxSeal";
+import SealLogoButton from "@/components/SealLogoButton";
 
-type Dust = {
-  left: string;
-  bottom: string;
-  size: string;
-  opacity: number;
-  delay: string;
-  duration: string;
+type Particle = {
+    id: number;
+    left: number;       // vw 0–100
+    bottom: number;     // vh
+    size: number;       // px
+    delay: number;      // s
+    duration: number;   // s
+    type: "dust" | "petal";
+    rotate: number;     // deg
+    drift: number;      // px lateral drift
+};
+
+/*
+  CÓMO FUNCIONA EL CÁLCULO RESPONSIVE:
+  ─────────────────────────────────────
+  El SVG tiene viewBox="0 0 625 1000" con preserveAspectRatio="none",
+  lo que significa que se estira para cubrir exactamente 100vw × 100vh.
+
+  Para que las líneas tengan el mismo ángulo visual en cualquier pantalla,
+  calculamos los orígenes en coordenadas del viewBox a partir de
+  cuántos píxeles reales queremos que salgan fuera de la pantalla.
+
+  Fórmula:
+    origen_x_svg = (px_fuera_pantalla / window.innerWidth)  * 625
+    origen_y_svg = (py_fuera_pantalla / window.innerHeight) * 1000
+
+  🔧 AJUSTA ESTOS DOS VALORES para cambiar el ángulo del sobre:
+    OFFSET_X_PX: cuántos px reales salen las líneas por los lados
+    OFFSET_Y_PX: cuántos px reales salen por arriba/abajo
+
+  Al ser píxeles físicos, el ángulo visual es IDÉNTICO en móvil y escritorio.
+*/
+const OFFSET_X_PX = 220; // 🔧 px que salen por los lados
+const OFFSET_Y_PX = 90; // 🔧 px que salen por arriba/abajo
+
+type LineOrigins = {
+    tlx: number; tly: number;
+    trx: number; try_: number;
+    blx: number; bly: number;
+    brx: number; bry: number;
 };
 
 export default function WeddingEnvelopeIntro() {
-  const [gone, setGone] = useState(false);
-  const [lift, setLift] = useState(false);
-  const [pulsing, setPulsing] = useState(false);
-  const [dust, setDust] = useState<Dust[]>([]);
-  const doneRef = useRef(false);
-
-  // Bloquea scroll mientras el overlay está activo
-  useEffect(() => {
-  const prev = document.body.style.overflow;
-
-  if (!gone) {
-    document.body.style.overflow = "hidden";
-  } else {
-    document.body.style.overflow = prev || "";
-  }
-
-  return () => {
-    document.body.style.overflow = prev;
-  };
-}, [gone]);
-
-  // Dust solo en cliente (evita hydration mismatch)
-  useEffect(() => {
-    const arr: Dust[] = Array.from({ length: 20 }).map(() => {
-      const s = 0.5 + Math.random() * 2;
-      return {
-        left: `${Math.random() * 100}vw`,
-        bottom: `${Math.random() * 50}vh`,
-        size: `${s}px`,
-        opacity: 0.1 + Math.random() * 0.28,
-        delay: `${Math.random() * 14}s`,
-        duration: `${11 + Math.random() * 13}s`,
-      };
+    const [gone, setGone] = useState(false);
+    const [lift, setLift] = useState(false);
+    const [pulsing, setPulsing] = useState(false);
+    const [particles, setParticles] = useState<Particle[]>([]);
+    const [origins, setOrigins] = useState<LineOrigins>({
+        tlx: 0, tly: 500,
+        trx: 625, try_: 0,
+        blx: 0, bly: 1000,
+        brx: 625, bry: 1000,
     });
-    setDust(arr);
-  }, []);
+    const doneRef = useRef(false);
 
-  const openEnvelope = () => {
-    if (doneRef.current) return;
-    doneRef.current = true;
+    // Calcula orígenes al montar y al cambiar tamaño de pantalla
+    useEffect(() => {
+        const calc = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const ox = (OFFSET_X_PX / w) * 1200;
+            const oy = (OFFSET_Y_PX / h) * 1000;
+            setOrigins({
+                tlx: -ox, tly: -oy,
+                trx: 625 + ox, try_: -oy,
+                blx: -ox, bly: 1000 + oy,
+                brx: 625 + ox, bry: 1000 + oy,
+            });
+        };
+        calc();
+        window.addEventListener("resize", calc);
+        return () => window.removeEventListener("resize", calc);
+    }, []);
 
-    setPulsing(false);
+    // Bloquea scroll mientras overlay está activo
+    useEffect(() => {
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = gone ? prev || "" : "hidden";
+        return () => { document.body.style.overflow = prev; };
+    }, [gone]);
 
-    // levantar flap (como tu script)
-    window.setTimeout(() => setLift(true), 320);
+    // Genera partículas solo en cliente
+    useEffect(() => {
+        const arr: Particle[] = Array.from({ length: 35 }).map((_, i) => {
+            const isPetal = i % 4 === 0;
+            return {
+                id: i,
+                left: Math.random() * 100,
+                bottom: -5 + Math.random() * 50,
+                size: isPetal ? 5 + Math.random() * 6 : 1.5 + Math.random() * 3,
+                delay: Math.random() * 16,
+                duration: 10 + Math.random() * 14,
+                type: isPetal ? "petal" : "dust",
+                rotate: Math.random() * 360,
+                drift: (Math.random() - 0.5) * 60,
+            };
+        });
+        setParticles(arr);
+    }, []);
 
-    // desaparecer overlay
-    window.setTimeout(() => setGone(true), 1200);
-  };
+    const openEnvelope = () => {
+        if (doneRef.current) return;
+        doneRef.current = true;
+        setPulsing(false);
+        setTimeout(() => setLift(true), 320);
+        setTimeout(() => setGone(true), 1200);
+    };
 
-  const onSealAnimEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
-    // tras el pop, empieza el pulse
-    if (e.animationName.includes("sealPop")) setPulsing(true);
-  };
+    const onSealAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
+        if ((e.animationName || "").includes("sealPop")) setPulsing(true);
+    };
 
-  return (
-    <div className={`${styles.root} ${gone ? styles.gone : ""}`} aria-hidden={gone}>
-      <div className={styles.stage}>
-        <svg
-          className={styles.envSvg}
-          viewBox="0 0 625 1000"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <linearGradient id="bodyG" x1="0" y1="0" x2=".15" y2="1">
-              <stop offset="0%" stopColor="#fdfaf5" />
-              <stop offset="50%" stopColor="#faf6ef" />
-              <stop offset="100%" stopColor="#f4efe6" />
-            </linearGradient>
-            <linearGradient id="flapTopG" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#fefcf8" />
-              <stop offset="100%" stopColor="#f7f3eb" />
-            </linearGradient>
-            <linearGradient id="flapBotG" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#ede9e0" />
-              <stop offset="100%" stopColor="#f5f1e9" />
-            </linearGradient>
-            <linearGradient id="sideGl" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#e8e4db" />
-              <stop offset="100%" stopColor="#f0ece4" />
-            </linearGradient>
-            <linearGradient id="sideGr" x1="1" y1="0" x2="0" y2="0">
-              <stop offset="0%" stopColor="#e8e4db" />
-              <stop offset="100%" stopColor="#f0ece4" />
-            </linearGradient>
+    return (
+        <>
+            <div className={`${styles.overlay} ${gone ? styles.gone : ""}`}>
+                <div className={styles.stage}>
 
-            <filter id="paperTexture" x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="sRGB">
-              <feTurbulence type="fractalNoise" baseFrequency="0.65 0.55" numOctaves="4" seed="2" stitchTiles="stitch" result="grain"/>
-              <feTurbulence type="turbulence" baseFrequency="0.018 0.008" numOctaves="2" seed="8" stitchTiles="stitch" result="fibre"/>
-              <feMerge result="noise">
-                <feMergeNode in="grain"/>
-                <feMergeNode in="fibre"/>
-              </feMerge>
-              <feColorMatrix in="noise" type="saturate" values="0" result="grayNoise"/>
-              <feComponentTransfer in="grayNoise" result="fadedNoise">
-                <feFuncA type="linear" slope="0.08"/>
-              </feComponentTransfer>
-              <feBlend in="SourceGraphic" in2="fadedNoise" mode="multiply" result="textured"/>
-              <feComponentTransfer in="textured">
-                <feFuncR type="linear" slope="1.03" intercept="-0.01"/>
-                <feFuncG type="linear" slope="1.03" intercept="-0.01"/>
-                <feFuncB type="linear" slope="1.03" intercept="-0.01"/>
-              </feComponentTransfer>
-            </filter>
+                    {/* ── Partículas flotantes ── */}
+                    {particles.map((p) => (
+                        <div
+                            key={p.id}
+                            className={`${styles.particle} ${p.type === "petal" ? styles.petal : styles.dust}`}
+                            style={{
+                                left: `${p.left}vw`,
+                                bottom: `${p.bottom}vh`,
+                                width: `${p.size}px`,
+                                height: p.type === "petal" ? `${p.size * 1.8}px` : `${p.size}px`,
+                                animationDelay: `${p.delay}s`,
+                                animationDuration: `${p.duration}s`,
+                                "--rotate": `${p.rotate}deg`,
+                                "--drift": `${p.drift}px`,
+                            } as React.CSSProperties}
+                            aria-hidden="true"
+                        />
+                    ))}
 
-            <filter id="envShadow" x="-5%" y="-5%" width="110%" height="110%">
-              <feDropShadow dx="0" dy="20" stdDeviation="28" floodColor="#000" floodOpacity=".45"/>
-            </filter>
+                    {/* ── SVG Envelope ── */}
+                    <svg
+                        className={styles.envSvg}
+                        viewBox="0 0 625 1000"
+                        preserveAspectRatio="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <defs>
+                            {/*
+                ZOOM EFFECT: En la foto el sobre ocupa toda la pantalla
+                y la solapa se ve muy pequeña (vértice muy alto ~25% del alto).
+                Conseguimos esto:
+                  - Solapa superior: vértice en y=280 (28% de 1000)
+                  - Triángulo inferior: vértice en y=720
+                  - Laterales: cuadriláteros entre esos puntos
+                El SVG ya cubre 100vw×100vh con preserveAspectRatio="none",
+                así que simplemente subimos/bajamos los vértices.
+              */}
 
-            <clipPath id="envClip">
-              <rect x="0" y="0" width="625" height="1000"/>
-            </clipPath>
-          </defs>
+                            {/* Paleta crema #faf7f0 */}
+                            {/* ── COLORES: Verde oliva clarito ── */}
+                            <linearGradient id="flapTopG" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#eef2e6" />
+                                <stop offset="100%" stopColor="#dde6d0" />
+                            </linearGradient>
+                            <linearGradient id="flapBotG" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#b8c4a8" />
+                                <stop offset="55%" stopColor="#c8d4b8" />
+                                <stop offset="100%" stopColor="#d4dfc6" />
+                            </linearGradient>
+                            <linearGradient id="sideGl" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#ccd8bc" />
+                                <stop offset="100%" stopColor="#bccaac" />
+                            </linearGradient>
+                            <linearGradient id="sideGr" x1="1" y1="0" x2="0" y2="0">
+                                <stop offset="0%" stopColor="#ccd8bc" />
+                                <stop offset="100%" stopColor="#bccaac" />
+                            </linearGradient>
 
-          <g clipPath="url(#envClip)" filter="url(#paperTexture)">
-            <rect className={styles.fillBody} x="0" y="0" width="625" height="1000" fill="url(#bodyG)"/>
+                            {/* Textura rugosa de papel */}
+                            <filter id="paperTexture" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+                                <feTurbulence
+                                    type="fractalNoise"
+                                    baseFrequency="0.95"
+                                    numOctaves="3"
+                                    seed="8"
+                                    stitchTiles="stitch"
+                                    result="n"
+                                />
+                                <feColorMatrix in="n" type="saturate" values="0" result="g" />
+                                <feComponentTransfer in="g" result="a">
+                                    <feFuncA type="linear" slope="0.18" />
+                                </feComponentTransfer>
 
-            <polygon className={styles.fillTop} points="0,0 625,0 595,30 312.5,500 30,30" fill="url(#flapTopG)"/>
-            <polygon className={styles.fillBot} points="0,1000 625,1000 595,850 312.5,500 30,850" fill="url(#flapBotG)"/>
+                                <feBlend in="SourceGraphic" in2="a" mode="multiply" />
+                            </filter>
 
-            <polygon className={styles.fillSide} points="0,0 30,30 312.5,500 30,850 0,1000" fill="url(#sideGl)"/>
-            <polygon className={styles.fillSide} points="625,0 595,30 312.5,500 595,850 625,1000" fill="url(#sideGr)"/>
-          </g>
+                            {/* Gradientes de pliegue */}
+                            <linearGradient id="creaseL" x1="0" y1="0" x2="1" y2="0.5">
+                                <stop offset="0%" stopColor="#f0f5e8" stopOpacity="0.95" />
+                                <stop offset="100%" stopColor="#6a7a5a" stopOpacity="0.5" />
+                            </linearGradient>
+                            <linearGradient id="creaseR" x1="1" y1="0" x2="0" y2="0.5">
+                                <stop offset="0%" stopColor="#f0f5e8" stopOpacity="0.95" />
+                                <stop offset="100%" stopColor="#6a7a5a" stopOpacity="0.5" />
+                            </linearGradient>
+                            <linearGradient id="creaseBL" x1="0" y1="1" x2="0.5" y2="0">
+                                <stop offset="0%" stopColor="#6a7a5a" stopOpacity="0.6" />
+                                <stop offset="100%" stopColor="#eaf7d5" stopOpacity="0.5" />
+                            </linearGradient>
+                            <linearGradient id="creaseBR" x1="1" y1="1" x2="0.5" y2="0">
+                                <stop offset="0%" stopColor="#6a7a4a" stopOpacity="0.6" />
+                                <stop offset="100%" stopColor="#eaf7d5" stopOpacity="0.5" />
+                            </linearGradient>
 
-          <rect x="0" y="0" width="625" height="1000" fill="none" filter="url(#envShadow)" opacity=".35"/>
+                            <filter id="envShadow" x="-5%" y="-5%" width="110%" height="110%">
+                                <feDropShadow dx="0" dy="18" stdDeviation="26"
+                                    floodColor="#2a2010" floodOpacity="0.38" />
+                            </filter>
+                            <clipPath id="envClip">
+                                <rect x="0" y="0" width="625" height="1000" />
+                            </clipPath>
+                        </defs>
 
-          {/* <rect className={`${styles.envLine} ${styles.lBorder}`} x="3" y="3" width="619" height="994" rx="2"/> */}
-          {/* <rect className={`${styles.envLine} ${styles.lInner}`} x="16" y="16" width="593" height="968" rx="2"/> */}
+                        {/*
+              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              GEOMETRÍA DEL SOBRE — viewBox 625 × 1000
+              Todo converge al punto central: (312.5, 500)
 
-          <line className={`${styles.envLine} ${styles.lTl} ${styles.shadowLeft}`} x1="-50" y1="30" x2="312.5" y2="500"/>
-          <line className={`${styles.envLine} ${styles.lTr} ${styles.shadowLeft}`} x1="670" y1="30" x2="312.5" y2="500"/>
-          <line className={`${styles.envLine} ${styles.lBl} ${styles.shadowLeft}`} x1="0" y1="850" x2="312.5" y2="500"/>
-          <line className={`${styles.envLine} ${styles.lBr} ${styles.shadowLeft}`} x1="670" y1="850" x2="312.5" y2="500"/>
-        </svg>
-      </div>
+              Para cambiar el "zoom" (cuánto se ven las esquinas
+              de la solapa), ajusta SOLO estos dos valores:
+              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            */}
 
-      {/* FLAP (CSS) */}
-      <div className={styles.flapWrap} aria-hidden="true">
-        <div className={`${styles.flapDiv} ${lift ? styles.lift : ""}`} />
-        <svg
-          className={`${styles.flapBorderSvg} ${lift ? styles.flapBorderHide : ""}`}
-          viewBox="0 0 1000 500"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <polyline className={styles.flapBorderLine} points="0,0 500,500 1000,0" />
-        </svg>
-      </div>
+                        {/* ── FILLS ── */}
+                        <g clipPath="url(#envClip)" filter="url(#paperTexture)">
 
-      {/* WAX SEAL */}
-      <div
-        className={`${styles.seal} ${pulsing ? styles.pulse : ""}`}
-        onClick={openEnvelope}
-        onAnimationEnd={onSealAnimEnd}
-        role="button"
-        aria-label="Pulsa el sello para abrir"
-      >
-        <svg viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="waxBody" cx="42%" cy="35%" r="68%">
-              <stop offset="0%" stopColor="#8a9e55"/>
-              <stop offset="40%" stopColor="#526634"/>
-              <stop offset="100%" stopColor="#2d3d18"/>
-            </radialGradient>
-            <radialGradient id="waxSheen" cx="30%" cy="25%" r="55%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.22)"/>
-              <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
-            </radialGradient>
-            <filter id="waxShadow">
-              <feDropShadow dx="0" dy="5" stdDeviation="9" floodColor="#000" floodOpacity=".55"/>
-            </filter>
-          </defs>
+                            {/* LATERALES */}
+                            <polygon className={styles.fillSide}
+                                points={`${origins.tlx},${origins.tly} 312.5,500 ${origins.blx},${origins.bly}`}
+                                fill="url(#sideGl)" />
+                            <polygon className={styles.fillSide}
+                                points={`${origins.trx},${origins.try_} 312.5,500 ${origins.brx},${origins.bry}`}
+                                fill="url(#sideGr)" />
 
-          <path
-            d="M 70,18 C 88,16 106,24 116,38 C 126,50 128,62 124,76 C 122,84 118,90 120,98 C 123,108 118,122 108,128 C 98,134 84,132 74,128 C 66,125 60,118 52,120 C 42,123 30,116 24,106 C 18,96 20,82 18,72 C 16,60 18,48 26,38 C 34,28 48,18 62,17 C 65,16 68,18 70,18 Z"
-            fill="url(#waxBody)"
-            filter="url(#waxShadow)"
-          />
-          <path
-            d="M 70,18 C 88,16 106,24 116,38 C 126,50 128,62 124,76 C 122,84 118,90 120,98 C 123,108 118,122 108,128 C 98,134 84,132 74,128 C 66,125 60,118 52,120 C 42,123 30,116 24,106 C 18,96 20,82 18,72 C 16,60 18,48 26,38 C 34,28 48,18 62,17 C 65,16 68,18 70,18 Z"
-            fill="url(#waxSheen)"
-          />
-          <path
-            d="M 70,18 C 88,16 106,24 116,38 C 126,50 128,62 124,76 C 122,84 118,90 120,98 C 123,108 118,122 108,128 C 98,134 84,132 74,128 C 66,125 60,118 52,120 C 42,123 30,116 24,106 C 18,96 20,82 18,72 C 16,60 18,48 26,38 C 34,28 48,18 62,17 C 65,16 68,18 70,18 Z"
-            fill="none"
-            stroke="rgba(200,175,85,0.55)"
-            strokeWidth="1.5"
-          />
+                            {/*
+                SOLAPA INFERIOR
+                🔧 El "480" es el apex vertical — más bajo = solapa más grande
+              */}
+                            <polygon className={styles.fillBot}
+                                points={`${origins.blx},${origins.bly} ${origins.brx},${origins.bry} 312.5,480`}
+                                fill="url(#flapBotG)" />
 
-          <g fontFamily="'Cormorant SC', serif" style={{ filter: "drop-shadow(0 1px 6px rgba(0,0,0,0.55))" }}>
-            <text x="38" y="78" textAnchor="middle" fontSize="34" fontWeight="500" fill="rgba(242,228,170,0.97)">M</text>
-            <text x="70" y="72" textAnchor="middle" fontSize="18" fontWeight="300" fill="rgba(210,185,100,0.85)">&amp;</text>
-            <text x="102" y="78" textAnchor="middle" fontSize="34" fontWeight="500" fill="rgba(242,228,170,0.97)">J</text>
-          </g>
-        </svg>
-      </div>
+                            {/*
+                SOLAPA SUPERIOR (la que se abre al hacer click)
+              */}
+                            <polygon className={styles.fillTop}
+                                points={`${origins.tlx},${origins.tly} ${origins.trx},${origins.try_} 312.5,500`}
+                                fill="url(#flapTopG)" />
 
-      <div className={styles.hint}>— Pulsa el sello para abrir —</div>
+                        </g>
 
-      {/* Dust */}
-      {dust.map((d, i) => (
-        <div
-          key={i}
-          className={styles.dust}
-          style={{
-            left: d.left,
-            bottom: d.bottom,
-            width: d.size,
-            height: d.size,
-            opacity: d.opacity,
-            animationDelay: d.delay,
-            animationDuration: d.duration,
-          }}
-          aria-hidden="true"
-        />
-      ))}
-    </div>
-  );
+                        <rect x="0" y="0" width="625" height="1000"
+                            fill="none" filter="url(#envShadow)" opacity="0.28" />
+
+                        {/*
+              LÍNEAS DE PLIEGUE — usan los mismos orígenes calculados.
+              El ángulo visual es idéntico en móvil y escritorio.
+            */}
+                        <line className={styles.lTl}
+                            x1={origins.tlx} y1={origins.tly} x2="312.5" y2="500"
+                            stroke="url(#creaseL)" />
+                        <line className={styles.lTr}
+                            x1={origins.trx} y1={origins.try_} x2="312.5" y2="500"
+                            stroke="url(#creaseR)" />
+                        <line className={styles.lBl}
+                            x1={origins.blx} y1={origins.bly} x2="312.5" y2="500"
+                            stroke="url(#creaseBL)" />
+                        <line className={styles.lBr}
+                            x1={origins.brx} y1={origins.bry} x2="312.5" y2="500"
+                            stroke="url(#creaseBR)" />
+
+                        {/* <rect className={styles.border} x="3" y="3" width="619" height="994" rx="2"/> */}
+                    </svg>
+
+                    {/* ── Flap CSS ── */}
+                    <div className={styles.flapWrap}>
+                        <div className={`${styles.flapDiv} ${lift ? styles.lift : ""}`} />
+                        {/* Sombra interior — aparece cuando la solapa sube, simula el interior del sobre */}
+                        <div className={`${styles.innerShadow} ${lift ? styles.innerShadowShow : ""}`} />
+                        <svg
+                            className={styles.flapBorderSvg}
+                            viewBox="0 0 1000 500"
+                            preserveAspectRatio="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            style={{ opacity: lift ? 0 : undefined, transition: "opacity 0.4s ease" }}
+                        >
+                            <defs>
+                                <linearGradient id="flapLineL" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stopColor="#f0f5e8" stopOpacity="0.95" />
+                                    <stop offset="100%" stopColor="#6a7a5a" stopOpacity="0.45" />
+                                </linearGradient>
+                                <linearGradient id="flapLineR" x1="1" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#f0f5e8" stopOpacity="0.95" />
+                                    <stop offset="100%" stopColor="#6a7a5a" stopOpacity="0.45" />
+                                </linearGradient>
+                            </defs>
+                            {/*
+                Líneas del borde de la solapa — usan los mismos orígenes
+                calculados que las líneas del SVG principal.
+                El viewBox del flap es 1000×500, así que escalamos:
+                  x: origins / 625 * 1000
+                  y: origins_y / 1000 * 500  (solo la parte superior)
+              */}
+                            <line
+                                x1={origins.tlx / 625 * 1000} y1={origins.tly / 1000 * 500}
+                                x2="500" y2="500"
+                                stroke="url(#flapLineL)" strokeWidth="2" />
+                            <line
+                                x1={origins.trx / 625 * 1000} y1={origins.try_ / 1000 * 500}
+                                x2="500" y2="500"
+                                stroke="url(#flapLineR)" strokeWidth="2" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <SealLogoButton onOpen={openEnvelope} size={120} src="/Logo.svg" />
+        </>
+    );
 }

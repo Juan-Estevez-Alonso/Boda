@@ -1,0 +1,76 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap");
+
+:root{
+  --anim-pop: 0.60s;
+  --anim-pulse: 3.4s;
+  --anim-click: 0.48s;
+}
+
+.seal{
+  --sz: 180px;
+
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: var(--sz);
+  height: var(--sz);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  z-index: 250;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* sombra SIEMPRE en el contenedor (evita “cuadrados” de filtros SVG) */
+  filter:
+    drop-shadow(0 10px 26px var(--shadow))
+    drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+
+  transition:
+    transform var(--anim-pop) cubic-bezier(0.34,1.56,0.64,1),
+    opacity   calc(var(--anim-pop) * 0.4) ease;
+}
+
+.seal svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.seal:focus-visible{
+  filter:
+    drop-shadow(0 0 0 3px rgba(255,255,255,0.22))
+    drop-shadow(0 10px 26px var(--shadow));
+}
+
+.idle,
+.clicking{
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.idle{
+  animation: sealPulse var(--anim-pulse) ease-in-out infinite;
+  animation-delay: var(--anim-pop);
+}
+
+@keyframes sealPulse{
+  0%,100%{
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 10px 26px var(--shadow)) drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+  }
+  50%{
+    transform: translate(-50%, -50%) scale(1.025);
+    filter: drop-shadow(0 14px 34px var(--shadow)) drop-shadow(0 2px 8px rgba(0,0,0,0.25));
+  }
+}
+
+.clicking{
+  animation: sealClick var(--anim-click) cubic-bezier(0.4,0,0.6,1) forwards !important;
+}
+
+@keyframes sealClick{
+  0%   { transform: translate(-50%, -50%) scale(1);    opacity:1; }
+  20%  { transform: translate(-50%, -50%) scale(1.07); opacity:1; }
+  100% { transform: translate(-50%, -50%) scale(0);    opacity:0; }
+}
