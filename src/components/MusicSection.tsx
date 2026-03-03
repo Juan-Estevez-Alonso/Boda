@@ -12,32 +12,20 @@ type SongRequestRow = {
   likes: number;
 };
 
-interface SongUI {
+type SongUI = {
   id: string;
-  artist: string;
   title: string;
+  artist: string;
   suggestedBy: string;
-  likes: number; // (solo UI por ahora)
-}
-
-function splitSongTitleArtist(song: string): { title: string; artist: string } {
-  // soporta "Canción — Artista" o "Canción - Artista"
-  const parts = song.split("—").map((s) => s.trim());
-  if (parts.length >= 2) return { title: parts[0], artist: parts.slice(1).join(" — ") };
-
-  const parts2 = song.split(" - ").map((s) => s.trim());
-  if (parts2.length >= 2) return { title: parts2[0], artist: parts2.slice(1).join(" - ") };
-
-  return { title: song.trim(), artist: "" };
-}
+  likes: number;
+};
 
 function mapRowToUI(r: SongRequestRow): SongUI {
-  const fromSong = splitSongTitleArtist(r.song);
   return {
     id: r.id,
-    title: fromSong.title || r.song,
-    artist: (r.artist ?? "").trim() || fromSong.artist || "—",
-    suggestedBy: (r.name ?? "").trim() || "Anónimo",
+    title: r.song,
+    artist: r.artist ?? "",
+    suggestedBy: r.name ?? "Anónimo",
     likes: r.likes ?? 0,
   };
 }
@@ -46,8 +34,8 @@ export default function MusicSection() {
   const [songs, setSongs] = useState<SongUI[]>([]);
   const [newSong, setNewSong] = useState({ title: "", artist: "", name: "" });
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   async function loadSongs() {
@@ -55,14 +43,16 @@ export default function MusicSection() {
     setError(null);
     try {
       const res = await fetch("/api/song-requests", { cache: "no-store" });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
 
-      if (!json.ok) throw new Error(json.message || "No se pudieron cargar las canciones.");
+      if (!res.ok || !json.ok) {
+        throw new Error(json.message || `Error ${res.status}`);
+      }
 
       const rows: SongRequestRow[] = json.data ?? [];
       setSongs(rows.map(mapRowToUI));
     } catch (e: any) {
-      setError(e?.message ?? "Error inesperado");
+      setError(e?.message ?? "Error cargando canciones");
     } finally {
       setLoading(false);
     }
@@ -90,20 +80,26 @@ export default function MusicSection() {
       const res = await fetch("/api/song-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // guardamos título en song + artista separado (tu API ya lo soporta)
         body: JSON.stringify({ name, song: title, artist }),
       });
 
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.message || "No se pudo guardar la canción.");
+      const json = await res.json().catch(() => ({}));
 
-      // Optimistic: mete arriba sin recargar
+      if (!res.ok || !json.ok) {
+        throw new Error(json.message || `Error ${res.status}`);
+      }
+
       const created: SongRequestRow = json.data;
+
+      // Añade arriba sin recargar
       setSongs((prev) => [mapRowToUI(created), ...prev]);
 
+      // Limpia campos
       setNewSong({ title: "", artist: "", name: "" });
+
+      // Mensaje ok
       setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 2500);
+      window.setTimeout(() => setSubmitted(false), 2500);
     } catch (e: any) {
       setError(e?.message ?? "Error inesperado");
     } finally {
@@ -112,38 +108,42 @@ export default function MusicSection() {
   };
 
   const handleLike = async (id: string) => {
-  // Optimista (sube al instante)
-  setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes: s.likes + 1 } : s)));
+    // Optimista
+    setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes: s.likes + 1 } : s)));
 
-  try {
-    const res = await fetch("/api/song-requests/like", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    try {
+      const res = await fetch("/api/song-requests/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
 
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.message || "No se pudo dar like.");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.message || `Error ${res.status}`);
 
-    const { likes } = json.data; // {id, likes}
+      const likes = json.data?.likes as number;
 
-    // Sincroniza con la verdad del server
-    setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes } : s)));
-  } catch {
-    // si falla, revertimos el optimista
-    setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes: Math.max(0, s.likes - 1) } : s)));
-  }
-};
+      setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes } : s)));
+    } catch {
+      // Revert
+      setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes: Math.max(0, s.likes - 1) } : s)));
+    }
+  };
 
   return (
     <section id="musica" className="section-container bg-white">
       <div className="max-w-4xl mx-auto">
         <h2 className="section-title text-center">Playlist de la Boda</h2>
+
         <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
-          ¿Hay una canción especial que no puede faltar en nuestra celebración?
-          ¡Cuéntanosla! Aquí puedes sugerir las canciones que harán de este día
-          algo aún más especial.
+          ¿Hay una canción especial que no puede faltar en nuestra celebración? ¡Cuéntanosla!
         </p>
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+            ❌ {error}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 gap-8">
           {/* Formulario */}
@@ -152,9 +152,7 @@ export default function MusicSection() {
               onSubmit={handleAddSong}
               className="bg-sand-50 rounded-2xl p-6 border border-sand-200 sticky top-8"
             >
-              <h3 className="text-xl font-semibold text-olive-800 mb-4">
-                Sugiere una Canción
-              </h3>
+              <h3 className="text-xl font-semibold text-olive-800 mb-4">Sugiere una Canción</h3>
 
               {submitted && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-green-700 text-sm">
@@ -162,48 +160,33 @@ export default function MusicSection() {
                 </div>
               )}
 
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-olive-800 mb-1">
-                    Tu nombre *
-                  </label>
+                  <label className="block text-sm font-medium text-olive-800 mb-1">Tu nombre *</label>
                   <input
                     type="text"
                     value={newSong.name}
                     onChange={(e) => setNewSong({ ...newSong, name: e.target.value })}
-                    placeholder="Tu nombre"
                     className="w-full px-3 py-2 rounded-lg border border-sand-200 focus:outline-none focus:border-olive-600 text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-olive-800 mb-1">
-                    Canción *
-                  </label>
+                  <label className="block text-sm font-medium text-olive-800 mb-1">Canción *</label>
                   <input
                     type="text"
                     value={newSong.title}
                     onChange={(e) => setNewSong({ ...newSong, title: e.target.value })}
-                    placeholder="Nombre de la canción"
                     className="w-full px-3 py-2 rounded-lg border border-sand-200 focus:outline-none focus:border-olive-600 text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-olive-800 mb-1">
-                    Artista *
-                  </label>
+                  <label className="block text-sm font-medium text-olive-800 mb-1">Artista *</label>
                   <input
                     type="text"
                     value={newSong.artist}
                     onChange={(e) => setNewSong({ ...newSong, artist: e.target.value })}
-                    placeholder="Nombre del artista"
                     className="w-full px-3 py-2 rounded-lg border border-sand-200 focus:outline-none focus:border-olive-600 text-sm"
                   />
                 </div>
@@ -215,27 +198,23 @@ export default function MusicSection() {
                 >
                   {sending ? "Guardando..." : "Añadir Canción"}
                 </button>
-
-                {loading && (
-                  <p className="text-xs text-gray-500 text-center">
-                    Cargando lista…
-                  </p>
-                )}
               </div>
             </form>
           </div>
 
-          {/* Lista de canciones */}
+          {/* Lista */}
           <div className="md:col-span-2">
-            <div className="space-y-3">
-              {!loading && songs.length === 0 ? (
-                <div className="bg-sand-50 rounded-2xl p-8 text-center">
-                  <p className="text-gray-600">
-                    Aún no hay canciones sugeridas. ¡Sé el primero en sugerir una!
-                  </p>
-                </div>
-              ) : (
-                songs.map((song) => (
+            {loading ? (
+              <div className="bg-sand-50 rounded-2xl p-8 text-center text-gray-600">
+                Cargando canciones…
+              </div>
+            ) : songs.length === 0 ? (
+              <div className="bg-sand-50 rounded-2xl p-8 text-center">
+                <p className="text-gray-600">Aún no hay canciones sugeridas. ¡Sé el primero!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {songs.map((song) => (
                   <div
                     key={song.id}
                     className="bg-sand-50 rounded-xl p-4 border border-sand-200 hover:border-olive-300 transition-colors"
@@ -245,7 +224,6 @@ export default function MusicSection() {
                         <p className="font-semibold text-olive-800">{song.title}</p>
                         <p className="text-sm text-gray-600">{song.artist}</p>
                       </div>
-
                       <button
                         onClick={() => handleLike(song.id)}
                         className="px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium transition-colors"
@@ -253,15 +231,19 @@ export default function MusicSection() {
                         ❤️ {song.likes}
                       </button>
                     </div>
-
-                    <p className="text-xs text-gray-500">
-                      Sugerida por {song.suggestedBy}
-                    </p>
+                    <p className="text-xs text-gray-500">Sugerida por {song.suggestedBy}</p>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* (opcional) botón recargar */}
+        <div className="mt-8 text-center">
+          <button onClick={loadSongs} className="text-sm underline text-olive-700">
+            Recargar lista
+          </button>
         </div>
       </div>
     </section>
