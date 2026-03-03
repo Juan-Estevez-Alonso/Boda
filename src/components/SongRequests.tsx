@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type SongRequest = {
   id: string;
@@ -9,63 +9,27 @@ type SongRequest = {
   song: string;
   artist: string | null;
   note: string | null;
-  likes?: number; // opcional por si lo añades
 };
 
 export default function SongRequests() {
   const [items, setItems] = useState<SongRequest[]>([]);
   const [status, setStatus] = useState<"idle" | "sending">("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  // Evita setState si el componente se desmonta
-  const mountedRef = useRef(true);
-  // Evita doble submit rápido
-  const inflightRef = useRef(false);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
 
   async function load() {
-    if (!mountedRef.current) return;
-    setError(null);
-
-    try {
-      const res = await fetch("/api/song-requests", { cache: "no-store" });
-      const json = await res.json().catch(() => ({}));
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || `Error ${res.status}`);
-      }
-
-      if (!mountedRef.current) return;
-      setItems(json.data ?? []);
-    } catch (e: any) {
-      if (!mountedRef.current) return;
-      setError(e?.message ?? "Error cargando canciones");
-    }
+    const res = await fetch("/api/song-requests", { cache: "no-store" });
+    const json = await res.json();
+    setItems(json.data ?? []);
   }
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    // evita doble submit (enter/click rápido)
-    if (inflightRef.current) return;
-    inflightRef.current = true;
-
     setStatus("sending");
-    setError(null);
 
-    const formEl = e.currentTarget;
-    const fd = new FormData(formEl);
+    const fd = new FormData(e.currentTarget);
 
     const payload = {
       name: String(fd.get("name") ?? "").trim(),
@@ -74,50 +38,22 @@ export default function SongRequests() {
       note: String(fd.get("note") ?? "").trim(),
     };
 
-    if (!payload.song) {
-      setError("La canción es obligatoria.");
-      setStatus("idle");
-      inflightRef.current = false;
-      return;
-    }
+    
+    await fetch("/api/song-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-    try {
-      const res = await fetch("/api/song-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || `Error ${res.status}`);
-      }
-
-      // Limpia campos (solo si sigue montado)
-      if (mountedRef.current) formEl.reset();
-
-      // Refresco real de lista
-      await load();
-    } catch (e: any) {
-      if (mountedRef.current) setError(e?.message ?? "No se pudo guardar la canción.");
-    } finally {
-      inflightRef.current = false;
-      if (mountedRef.current) setStatus("idle");
-    }
+    e.currentTarget.reset();
+    setStatus("idle");
+    load();
   }
 
   return (
     <div className="grid2">
       <form onSubmit={onSubmit} className="" style={{ padding: 16 }}>
-        {error && (
-          <div className="card" style={{ padding: 12, boxShadow: "none", borderColor: "rgba(220,38,38,.25)" }}>
-            <div className="help" style={{ color: "rgba(220,38,38,.9)" }}>
-              ❌ {error}
-            </div>
-          </div>
-        )}
-
-        <div className="field" style={{ marginTop: error ? 10 : 0 }}>
+        <div className="field">
           <label className="help">Tu nombre (opcional)</label>
           <input className="input" name="name" placeholder="Para asignarte el mérito (o la culpa)" />
         </div>
@@ -169,7 +105,9 @@ export default function SongRequests() {
             </div>
           ))}
 
-          {items.length > 12 && <div className="help">…y {items.length - 12} más. Esto pinta muy bien.</div>}
+          {items.length > 12 && (
+            <div className="help">…y {items.length - 12} más. Esto pinta muy bien.</div>
+          )}
         </div>
       </div>
     </div>
