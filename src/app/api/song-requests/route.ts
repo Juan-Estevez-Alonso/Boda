@@ -12,8 +12,8 @@ function badRequest(message: string) {
 
 export async function GET() {
   const { data, error } = await supabase
-    .from("song_requests")
-    .select("id, created_at, name, song, artist, note")
+    .from("songs")
+    .select("id, created_at, name, song, artist, note, likes")
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -40,9 +40,9 @@ export async function POST(req: Request) {
   if (!song) return badRequest("La canción es obligatoria.");
 
   const { data, error } = await supabase
-    .from("song_requests")
+    .from("songs")
     .insert([{ name: name || null, song, artist: artist || null, note: note || null }])
-    .select("id, created_at, name, song, artist, note")
+    .select("id, created_at, name, song, artist, note, likes")
     .single();
 
   if (error) {

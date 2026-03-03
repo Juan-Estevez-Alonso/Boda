@@ -1,67 +1,139 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 
-interface Song {
+type SongRequestRow = {
+  id: string;
+  created_at: string;
+  name: string | null;
+  song: string;
+  artist: string | null;
+  note: string | null;
+  likes: number;
+};
+
+interface SongUI {
   id: string;
   artist: string;
   title: string;
   suggestedBy: string;
-  likes: number;
+  likes: number; // (solo UI por ahora)
+}
+
+function splitSongTitleArtist(song: string): { title: string; artist: string } {
+  // soporta "Canción — Artista" o "Canción - Artista"
+  const parts = song.split("—").map((s) => s.trim());
+  if (parts.length >= 2) return { title: parts[0], artist: parts.slice(1).join(" — ") };
+
+  const parts2 = song.split(" - ").map((s) => s.trim());
+  if (parts2.length >= 2) return { title: parts2[0], artist: parts2.slice(1).join(" - ") };
+
+  return { title: song.trim(), artist: "" };
+}
+
+function mapRowToUI(r: SongRequestRow): SongUI {
+  const fromSong = splitSongTitleArtist(r.song);
+  return {
+    id: r.id,
+    title: fromSong.title || r.song,
+    artist: (r.artist ?? "").trim() || fromSong.artist || "—",
+    suggestedBy: (r.name ?? "").trim() || "Anónimo",
+    likes: r.likes ?? 0,
+  };
 }
 
 export default function MusicSection() {
-  const [songs, setSongs] = useState<Song[]>([
-    {
-      id: '1',
-      title: 'Perfect',
-      artist: 'Ed Sheeran',
-      suggestedBy: 'María',
-      likes: 5,
-    },
-    {
-      id: '2',
-      title: 'All of Me',
-      artist: 'John Legend',
-      suggestedBy: 'Juan',
-      likes: 8,
-    },
-    {
-      id: '3',
-      title: 'Thinking Out Loud',
-      artist: 'Ed Sheeran',
-      suggestedBy: 'Sarah',
-      likes: 6,
-    },
-  ]);
-
-  const [newSong, setNewSong] = useState({ title: '', artist: '', name: '' });
+  const [songs, setSongs] = useState<SongUI[]>([]);
+  const [newSong, setNewSong] = useState({ title: "", artist: "", name: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAddSong = (e: React.FormEvent) => {
+  async function loadSongs() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/song-requests", { cache: "no-store" });
+      const json = await res.json();
+
+      if (!json.ok) throw new Error(json.message || "No se pudieron cargar las canciones.");
+
+      const rows: SongRequestRow[] = json.data ?? [];
+      setSongs(rows.map(mapRowToUI));
+    } catch (e: any) {
+      setError(e?.message ?? "Error inesperado");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadSongs();
+  }, []);
+
+  const handleAddSong = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newSong.title && newSong.artist && newSong.name) {
-      const song: Song = {
-        id: Date.now().toString(),
-        title: newSong.title,
-        artist: newSong.artist,
-        suggestedBy: newSong.name,
-        likes: 0,
-      };
-      setSongs([song, ...songs]);
-      setNewSong({ title: '', artist: '', name: '' });
+    setError(null);
+
+    const name = newSong.name.trim();
+    const title = newSong.title.trim();
+    const artist = newSong.artist.trim();
+
+    if (!title || !artist || !name) {
+      setError("Completa nombre, canción y artista.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await fetch("/api/song-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // guardamos título en song + artista separado (tu API ya lo soporta)
+        body: JSON.stringify({ name, song: title, artist }),
+      });
+
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message || "No se pudo guardar la canción.");
+
+      // Optimistic: mete arriba sin recargar
+      const created: SongRequestRow = json.data;
+      setSongs((prev) => [mapRowToUI(created), ...prev]);
+
+      setNewSong({ title: "", artist: "", name: "" });
       setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 3000);
+      setTimeout(() => setSubmitted(false), 2500);
+    } catch (e: any) {
+      setError(e?.message ?? "Error inesperado");
+    } finally {
+      setSending(false);
     }
   };
 
-  const handleLike = (id: string) => {
-    setSongs(
-      songs.map((song) =>
-        song.id === id ? { ...song, likes: song.likes + 1 } : song
-      )
-    );
-  };
+  const handleLike = async (id: string) => {
+  // Optimista (sube al instante)
+  setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes: s.likes + 1 } : s)));
+
+  try {
+    const res = await fetch("/api/song-requests/like", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.message || "No se pudo dar like.");
+
+    const { likes } = json.data; // {id, likes}
+
+    // Sincroniza con la verdad del server
+    setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes } : s)));
+  } catch {
+    // si falla, revertimos el optimista
+    setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes: Math.max(0, s.likes - 1) } : s)));
+  }
+};
 
   return (
     <section id="musica" className="section-container bg-white">
@@ -90,6 +162,12 @@ export default function MusicSection() {
                 </div>
               )}
 
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-olive-800 mb-1">
@@ -98,13 +176,12 @@ export default function MusicSection() {
                   <input
                     type="text"
                     value={newSong.name}
-                    onChange={(e) =>
-                      setNewSong({ ...newSong, name: e.target.value })
-                    }
+                    onChange={(e) => setNewSong({ ...newSong, name: e.target.value })}
                     placeholder="Tu nombre"
                     className="w-full px-3 py-2 rounded-lg border border-sand-200 focus:outline-none focus:border-olive-600 text-sm"
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-olive-800 mb-1">
                     Canción *
@@ -112,13 +189,12 @@ export default function MusicSection() {
                   <input
                     type="text"
                     value={newSong.title}
-                    onChange={(e) =>
-                      setNewSong({ ...newSong, title: e.target.value })
-                    }
+                    onChange={(e) => setNewSong({ ...newSong, title: e.target.value })}
                     placeholder="Nombre de la canción"
                     className="w-full px-3 py-2 rounded-lg border border-sand-200 focus:outline-none focus:border-olive-600 text-sm"
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-olive-800 mb-1">
                     Artista *
@@ -126,19 +202,25 @@ export default function MusicSection() {
                   <input
                     type="text"
                     value={newSong.artist}
-                    onChange={(e) =>
-                      setNewSong({ ...newSong, artist: e.target.value })
-                    }
+                    onChange={(e) => setNewSong({ ...newSong, artist: e.target.value })}
                     placeholder="Nombre del artista"
                     className="w-full px-3 py-2 rounded-lg border border-sand-200 focus:outline-none focus:border-olive-600 text-sm"
                   />
                 </div>
+
                 <button
                   type="submit"
-                  className="w-full px-4 py-2 bg-olive-600 text-white rounded-lg font-medium hover:bg-olive-700 transition-colors text-sm"
+                  disabled={sending}
+                  className="w-full px-4 py-2 bg-olive-600 text-white rounded-lg font-medium hover:bg-olive-700 transition-colors text-sm disabled:opacity-60"
                 >
-                  Añadir Canción
+                  {sending ? "Guardando..." : "Añadir Canción"}
                 </button>
+
+                {loading && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Cargando lista…
+                  </p>
+                )}
               </div>
             </form>
           </div>
@@ -146,7 +228,7 @@ export default function MusicSection() {
           {/* Lista de canciones */}
           <div className="md:col-span-2">
             <div className="space-y-3">
-              {songs.length === 0 ? (
+              {!loading && songs.length === 0 ? (
                 <div className="bg-sand-50 rounded-2xl p-8 text-center">
                   <p className="text-gray-600">
                     Aún no hay canciones sugeridas. ¡Sé el primero en sugerir una!
@@ -160,11 +242,10 @@ export default function MusicSection() {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="font-semibold text-olive-800">
-                          {song.title}
-                        </p>
+                        <p className="font-semibold text-olive-800">{song.title}</p>
                         <p className="text-sm text-gray-600">{song.artist}</p>
                       </div>
+
                       <button
                         onClick={() => handleLike(song.id)}
                         className="px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium transition-colors"
@@ -172,6 +253,7 @@ export default function MusicSection() {
                         ❤️ {song.likes}
                       </button>
                     </div>
+
                     <p className="text-xs text-gray-500">
                       Sugerida por {song.suggestedBy}
                     </p>
