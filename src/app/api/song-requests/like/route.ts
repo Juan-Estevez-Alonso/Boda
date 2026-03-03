@@ -10,7 +10,6 @@ function badRequest(message: string) {
   return NextResponse.json({ ok: false, message }, { status: 400 });
 }
 
-// POST /api/song-requests/like  { id: "uuid" }
 export async function POST(req: Request) {
   let body: any;
   try {
@@ -22,20 +21,20 @@ export async function POST(req: Request) {
   const id = String(body?.id ?? "").trim();
   if (!id) return badRequest("Falta id.");
 
-  // 1) leer likes actuales
+  // 1) Leer likes actuales
   const { data: row, error: e1 } = await supabase
-    .from("songs")
+    .from("song_requests")
     .select("id, likes")
     .eq("id", id)
     .single();
 
   if (e1) return NextResponse.json({ ok: false, message: e1.message }, { status: 500 });
 
-  // 2) actualizar likes = likes + 1
-  const nextLikes = (row.likes ?? 0) + 1;
+  const nextLikes = (row?.likes ?? 0) + 1;
 
+  // 2) Actualizar likes
   const { data, error: e2 } = await supabase
-    .from("songs")
+    .from("song_requests")
     .update({ likes: nextLikes })
     .eq("id", id)
     .select("id, likes")
@@ -43,5 +42,5 @@ export async function POST(req: Request) {
 
   if (e2) return NextResponse.json({ ok: false, message: e2.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, data }); // {id, likes}
+  return NextResponse.json({ ok: true, data });
 }
