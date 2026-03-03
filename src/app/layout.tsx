@@ -3,7 +3,11 @@ import localFont from "next/font/local";
 
 export const metadata = {
   title: "Mariana & Juan — 03.10.2026",
-  description: "Info de la boda, RSVP y canciones para la fiesta.",
+  description: "Boda de Mariana & Juan. 3 de Octubre de 2026 en Isla Cristina.",
+  icons: {
+    icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 const laLuxes = localFont({

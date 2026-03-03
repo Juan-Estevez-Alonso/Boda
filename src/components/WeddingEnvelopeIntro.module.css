@@ -104,9 +104,9 @@
     /* brillo suave */
     radial-gradient(circle at 30% 22%, rgba(255,255,255,0.35), rgba(255,255,255,0) 46%),
     /* ruido (papel) */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='3' seed='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E"),
     /* tu degradado base */
-    linear-gradient(175deg, #eef2e6 0%, #dde6d0 50%, #ccd8bc 100%);
+    linear-gradient(175deg, #bccaac 0%, #dde6d0 50%, #ccd8bc 100%);
 
   background-size: auto, 260px 260px, auto;
   background-repeat: no-repeat, repeat, no-repeat;
@@ -383,4 +383,66 @@
 .fadeOut {
   opacity: 0 !important;
   transition: opacity 0.3s ease;
+}
+.flapText{
+  position: absolute;
+  left: 50%;
+  top: 52%;                 /* “mitad” visual de la solapa */
+  transform: translate(-50%, -50%);
+  width: min(78%, 520px);
+  text-align: center;
+
+  font-family: "Cormorant Garamond", "Cinzel", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(16px, 2.4vw, 22px);
+  letter-spacing: 0.04em;
+
+  color: rgba(44, 36, 22, 0.78); /* tu --ink */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  opacity: 0;
+  transition: opacity .4s ease;
+  pointer-events: none;
+}
+
+/* aparece cuando el flap ya está visible */
+.flapDiv .flapText{
+  opacity: 0.92;
+}
+
+/* si quieres que se desvanezca al levantar la solapa */
+.lift .flapText{
+  opacity: 0;
+}
+
+.pressHint{
+  position: fixed;
+  left: 50%;
+  top: calc(50vh + 92px);     /* debajo del sello */
+  transform: translateX(-50%);
+  z-index: 260;               /* por encima del overlay */
+
+  font-family: "Cormorant Garamond", "Cinzel", Georgia, serif;
+  font-style: italic;
+
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 400;
+  color: rgba(44, 36, 22, 0.78);
+  letter-spacing: 0.02em;
+  text-align: center;
+  white-space: nowrap;
+
+  opacity: 0;
+  animation: hintUp 0.9s ease 1.7s forwards;
+  pointer-events: none;
+}
+
+@keyframes hintUp{
+  from{ opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to  { opacity: .82; transform: translateX(-50%) translateY(0); }
+}
+
+.hintOut{
+  opacity: 0 !important;
+  transition: opacity .25s ease;
 }

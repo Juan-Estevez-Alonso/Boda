@@ -181,7 +181,7 @@ export default function WeddingEnvelopeIntro() {
                             </linearGradient>
 
                             {/* Textura rugosa de papel */}
-                            <filter id="paperTexture" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+                            <filter id="paperTexture" x="-5%" y="-5%" width="110%" height="110%" colorInterpolationFilters="sRGB">
                                 <feTurbulence
                                     type="fractalNoise"
                                     baseFrequency="0.95"
@@ -288,7 +288,11 @@ export default function WeddingEnvelopeIntro() {
 
                     {/* ── Flap CSS ── */}
                     <div className={styles.flapWrap}>
-                        <div className={`${styles.flapDiv} ${lift ? styles.lift : ""}`} />
+                        <div className={`${styles.flapDiv} ${lift ? styles.lift : ""}`} >
+                            <div className={styles.flapText}>
+                                ¡Tenemos algo que contaros!
+                            </div>
+                        </div>
                         {/* Sombra interior — aparece cuando la solapa sube, simula el interior del sobre */}
                         <div className={`${styles.innerShadow} ${lift ? styles.innerShadowShow : ""}`} />
                         <svg
@@ -329,6 +333,11 @@ export default function WeddingEnvelopeIntro() {
             </div>
 
             <SealLogoButton onOpen={openEnvelope} size={120} src="/Logo.svg" />
+            {!gone && (
+            <div className={`${styles.pressHint} ${doneRef.current ? styles.hintOut : ""}`}>
+                Pulsa el sello para abrir tu invitación
+            </div>
+            )}
         </>
     );
 }
