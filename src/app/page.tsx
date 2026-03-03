@@ -1,6 +1,5 @@
 
 import RSVPForm from "@/components/RSVPForm";
-import SongRequests from "@/components/SongRequests";
 import Maps from "@/components/Maps";
 import Section from "@/components/Section";
 import FlipCountdown from "@/components/FlipCountdown";
@@ -11,6 +10,7 @@ import EnvelopeIntro from "@/components/EnvelopeIntro";
 import AfterHeroBlock from "@/components/AfterHeroBlock";
 import RevealOnce from "@/components/RevealOnce";
 import WeddingEnvelopeIntro from "@/components/WeddingEnvelopeIntro";
+import MusicSection from "@/components/MusicSection";
 
 // #c3b494
 export default function Page() {
@@ -351,7 +351,7 @@ export default function Page() {
                 Si no… también, pero con miradita 😄
               </p>
             </RevealOnce>
-            <SongRequests />
+            <MusicSection />
           </Section>
         </div>
       </RevealOnce>

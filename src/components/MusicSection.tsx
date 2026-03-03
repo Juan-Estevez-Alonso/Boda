@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SongRequestRow = {
   id: string;
@@ -38,9 +38,23 @@ export default function MusicSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Evita “setState” cuando el componente ya no existe
+  const mountedRef = useRef(true);
+  // Evita doble submit por click/enter rápido
+  const inflightRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   async function loadSongs() {
+    if (!mountedRef.current) return;
     setLoading(true);
     setError(null);
+
     try {
       const res = await fetch("/api/song-requests", { cache: "no-store" });
       const json = await res.json().catch(() => ({}));
@@ -50,20 +64,28 @@ export default function MusicSection() {
       }
 
       const rows: SongRequestRow[] = json.data ?? [];
+      if (!mountedRef.current) return;
       setSongs(rows.map(mapRowToUI));
     } catch (e: any) {
+      if (!mountedRef.current) return;
       setError(e?.message ?? "Error cargando canciones");
     } finally {
+      if (!mountedRef.current) return;
       setLoading(false);
     }
   }
 
   useEffect(() => {
     loadSongs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddSong = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (inflightRef.current) return; // evita doble submit
+    inflightRef.current = true;
+
     setError(null);
 
     const name = newSong.name.trim();
@@ -72,11 +94,15 @@ export default function MusicSection() {
 
     if (!title || !artist || !name) {
       setError("Completa nombre, canción y artista.");
+      inflightRef.current = false;
       return;
     }
 
     setSending(true);
+
     try {
+      console.log("[MusicSection] POST /api/song-requests …");
+
       const res = await fetch("/api/song-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,6 +110,7 @@ export default function MusicSection() {
       });
 
       const json = await res.json().catch(() => ({}));
+      console.log("[MusicSection] response", json);
 
       if (!res.ok || !json.ok) {
         throw new Error(json.message || `Error ${res.status}`);
@@ -91,19 +118,25 @@ export default function MusicSection() {
 
       const created: SongRequestRow = json.data;
 
-      // Añade arriba sin recargar
-      setSongs((prev) => [mapRowToUI(created), ...prev]);
+      // 1) Optimista
+      if (mountedRef.current) {
+        setSongs((prev) => [mapRowToUI(created), ...prev]);
+        setNewSong({ title: "", artist: "", name: "" });
+        setSubmitted(true);
+        window.setTimeout(() => {
+          if (mountedRef.current) setSubmitted(false);
+        }, 2500);
+      }
 
-      // Limpia campos
-      setNewSong({ title: "", artist: "", name: "" });
-
-      // Mensaje ok
-      setSubmitted(true);
-      window.setTimeout(() => setSubmitted(false), 2500);
+      // 2) Refresco real (por si el server añade campos o el orden cambia)
+      await loadSongs();
     } catch (e: any) {
-      setError(e?.message ?? "Error inesperado");
+      console.error("[MusicSection] ERROR", e);
+      if (mountedRef.current) setError(e?.message ?? "Error inesperado");
     } finally {
-      setSending(false);
+      // ✅ pase lo que pase, desbloquea
+      inflightRef.current = false;
+      if (mountedRef.current) setSending(false);
     }
   };
 
@@ -122,7 +155,6 @@ export default function MusicSection() {
       if (!res.ok || !json.ok) throw new Error(json.message || `Error ${res.status}`);
 
       const likes = json.data?.likes as number;
-
       setSongs((prev) => prev.map((s) => (s.id === id ? { ...s, likes } : s)));
     } catch {
       // Revert
@@ -146,7 +178,6 @@ export default function MusicSection() {
         )}
 
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Formulario */}
           <div>
             <form
               onSubmit={handleAddSong}
@@ -202,12 +233,9 @@ export default function MusicSection() {
             </form>
           </div>
 
-          {/* Lista */}
           <div className="md:col-span-2">
             {loading ? (
-              <div className="bg-sand-50 rounded-2xl p-8 text-center text-gray-600">
-                Cargando canciones…
-              </div>
+              <div className="bg-sand-50 rounded-2xl p-8 text-center text-gray-600">Cargando canciones…</div>
             ) : songs.length === 0 ? (
               <div className="bg-sand-50 rounded-2xl p-8 text-center">
                 <p className="text-gray-600">Aún no hay canciones sugeridas. ¡Sé el primero!</p>
@@ -239,7 +267,6 @@ export default function MusicSection() {
           </div>
         </div>
 
-        {/* (opcional) botón recargar */}
         <div className="mt-8 text-center">
           <button onClick={loadSongs} className="text-sm underline text-olive-700">
             Recargar lista
