@@ -249,7 +249,7 @@ export default function Page() {
                 <div className="card" style={{ padding: 16 }}>
                   <div className="kicker">¿Vienes con peques?</div>
                   <div className="help" style={{ marginTop: 10 }}>
-                    Dínoslo en el RSVP para tenerlo todo controlado 🙌
+                    Mejor dejalos en casa. Siento decir que es un evento para adultos. Queremos que los padres se diviertan sin preocupaciones 🙌
                   </div>
                 </div>
               </RevealOnce>

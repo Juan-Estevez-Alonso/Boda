@@ -13,8 +13,14 @@ export default function RSVPForm() {
     setStatus("sending");
     setMsg("");
 
-    const fd = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(fd.entries());
+    const formEl = e.currentTarget;
+    const fd = new FormData(formEl);
+
+    const payload = {
+      name: String(fd.get("name") ?? "").trim(),
+      attendance: String(fd.get("attendance") ?? "").trim(),
+      allergies: String(fd.get("allergies") ?? "").trim(),
+    };
 
     try {
       const res = await fetch("/api/rsvp", {
@@ -22,14 +28,19 @@ export default function RSVPForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("fail");
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json.ok) {
+        throw new Error(json.message || "No se pudo enviar.");
+      }
 
       setStatus("ok");
       setMsg("¡Perfecto! Te apuntamos. Ahora… a preparar el baile 😄");
-      e.currentTarget.reset();
-    } catch {
+      formEl.reset();
+    } catch (err: any) {
       setStatus("error");
-      setMsg("Ups… algo falló. Dale otra vez (o avísanos por WhatsApp).");
+      setMsg(err?.message ?? "Ups… algo falló. Dale otra vez (o avísanos por WhatsApp).");
     }
   }
 
@@ -38,7 +49,7 @@ export default function RSVPForm() {
       <div className="grid2">
         <RevealOnce className="field">
           <label className="help">Nombre y apellido</label>
-          <input className="input" name="name" required placeholder="Ej: Ana Pérez" />
+          <input className="input" name="name" required placeholder="Ej: Armando Castillo" />
         </RevealOnce>
 
         <RevealOnce className="field">
@@ -49,7 +60,6 @@ export default function RSVPForm() {
             <option value="no">No puedo (pero os quiero igual)</option>
           </select>
         </RevealOnce>
-
       </div>
 
       <div style={{ height: 12 }} />
@@ -69,7 +79,6 @@ export default function RSVPForm() {
           {status === "sending" ? "Enviando..." : "Confirmar asistencia"}
         </button>
       </RevealOnce>
-      
 
       {msg && (
         <RevealOnce style={{ marginTop: 10, color: status === "error" ? "#8A1F1F" : "var(--olive)" }}>
