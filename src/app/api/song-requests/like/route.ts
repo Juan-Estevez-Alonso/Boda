@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   // 1) Leer likes actuales
   const { data: row, error: e1 } = await supabase
-    .from("song_requests")
+    .from("songs")
     .select("id, likes")
     .eq("id", id)
     .single();
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   // 2) Actualizar likes
   const { data, error: e2 } = await supabase
-    .from("song_requests")
+    .from("songs")
     .update({ likes: nextLikes })
     .eq("id", id)
     .select("id, likes")
