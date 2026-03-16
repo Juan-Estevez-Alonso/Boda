@@ -15,11 +15,14 @@ export default function RSVPForm() {
 
     const formEl = e.currentTarget;
     const fd = new FormData(formEl);
+    const [ts] = useState(Date.now());
 
     const payload = {
       name: String(fd.get("name") ?? "").trim(),
       attendance: String(fd.get("attendance") ?? "").trim(),
       allergies: String(fd.get("allergies") ?? "").trim(),
+      website: fd.get("website"), // honeypot
+      ts, // timestamp para validación anti-bot
     };
 
     try {
@@ -46,6 +49,13 @@ export default function RSVPForm() {
 
   return (
     <form onSubmit={onSubmit} className="" style={{ padding: 16 }}>
+      {/* honeypot */}
+      <input
+        type="text"
+        name="website"
+        style={{ display: "none" }}
+        autoComplete="off"
+      />
       <div className="grid2">
         <RevealOnce className="field">
           <label className="help">Nombre y apellido</label>

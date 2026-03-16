@@ -20,6 +20,7 @@ export default function SongRequests() {
   const mountedRef = useRef(true);
   const inflightRef = useRef(false);
   const likingRef = useRef<Record<string, boolean>>({}); // evita spam por item
+  const [ts] = useState(Date.now());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -69,6 +70,7 @@ export default function SongRequests() {
       song: String(fd.get("song") ?? "").trim(),
       artist: String(fd.get("artist") ?? "").trim(),
       note: String(fd.get("note") ?? "").trim(),
+      
     };
 
     if (!payload.song) {
@@ -148,6 +150,12 @@ export default function SongRequests() {
             </div>
           </div>
         )}
+        <input
+          type="text"
+          name="website"
+          style={{ display: "none" }}
+          autoComplete="off"
+        />
 
         <div className="field" style={{ marginTop: error ? 10 : 0 }}>
           <label className="help">Tu nombre (opcional)</label>
