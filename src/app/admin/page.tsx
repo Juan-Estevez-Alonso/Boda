@@ -1,3 +1,4 @@
+import React from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -23,6 +24,21 @@ export default async function AdminPage() {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 20px" }}>
       <h1 style={{ fontSize: 32, marginBottom: 24 }}>Panel de boda</h1>
+      <a
+        href="/api/admin/export-rsvps"
+        style={{
+            display: "inline-block",
+            marginBottom: 20,
+            padding: "10px 16px",
+            borderRadius: 8,
+            background: "#556B2F",
+            color: "white",
+            textDecoration: "none",
+            fontWeight: 600,
+        }}
+        >
+        Exportar invitados (Excel)
+        </a>
 
       <div
         style={{
@@ -78,6 +94,18 @@ export default async function AdminPage() {
 
       <section>
         <h2 style={{ fontSize: 24, marginBottom: 16 }}>Canciones</h2>
+        <h3 style={{ marginBottom: 10, fontSize: 20 }}>
+        🔥 TOP canciones para el DJ
+        </h3>
+
+        <div style={{ display: "grid", gap: 8, marginBottom: 20 }}>
+        {(songs ?? []).slice(0, 5).map((s, i) => (
+            <div key={s.id} style={{ fontWeight: 600 }}>
+            {i + 1}️⃣ {s.song}
+            {s.artist ? ` — ${s.artist}` : ""} ❤️ {s.likes ?? 0}
+            </div>
+        ))}
+        </div>
 
         {songsError ? (
           <p style={{ color: "crimson" }}>{songsError.message}</p>
