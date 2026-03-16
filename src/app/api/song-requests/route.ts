@@ -14,6 +14,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("songs")
     .select("id, created_at, name, song, artist, note, likes")
+    .order("likes", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(50);
 
