@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styles from "./SealLogoButton.module.css";
+import { memo } from "react";
 
 type Props = {
   onOpen: () => void;
@@ -9,7 +10,7 @@ type Props = {
   src?: string;
 };
 
-export default function SealLogoButton({
+function SealLogoButton({
   onOpen,
   size = 170,
   src = "/Logo.svg",
@@ -35,3 +36,4 @@ export default function SealLogoButton({
     </button>
   );
 }
+export default memo(SealLogoButton);
