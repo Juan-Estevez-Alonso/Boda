@@ -335,6 +335,10 @@ button, input, textarea, select{ font: inherit; }
     transform: translate3d(-18%, 0, 0) scale(1.08);
     opacity: .20;
   }
+  .hero{
+    height: 96vh;
+
+}
   
 }
 .revealOnce{
