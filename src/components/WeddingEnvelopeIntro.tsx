@@ -254,11 +254,15 @@ export default function WeddingEnvelopeIntro() {
                 </div>
             </div>
 
-            <SealLogoButton onOpen={openEnvelope} size={120} src="/Logo.svg" />
-            {!gone && (
-                <div className={`${styles.pressHint} ${doneRef.current ? styles.hintOut : ""}`}>
-                    Pulsa el sello para abrir tu invitación
-                </div>
+            {origins && (
+            <>
+                <SealLogoButton onOpen={openEnvelope} size={120} src="/Logo.svg" />
+                {!gone && (
+                    <div className={`${styles.pressHint} ${doneRef.current ? styles.hintOut : ""}`}>
+                        Pulsa el sello para abrir tu invitación
+                    </div>
+                )}
+            </>
             )}
         </>
     );

@@ -269,7 +269,7 @@ export default function Page() {
               <RevealOnce className="revealPadding">
                 <p className="p" style={{ marginTop: 0 }}>
                   Lo más importante es que vengas y lo pases brutal. Pero si te apetece ayudarnos con la luna de miel, la boda, la casa, los niños(que ya vendrán) o lo que tú quieras... 
-                  aquí tienes la opción más cómoda 😄
+                  aquí tienes la opción más cómoda.  😄
                 </p>
 
                 <div className="card" style={{ padding: 16 }}>

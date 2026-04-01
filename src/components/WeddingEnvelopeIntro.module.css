@@ -217,7 +217,7 @@
 
 @media (max-width: 600px){
   .flapDiv {
-    clip-path: polygon(-80vw 0, calc(100% + 80vw) 0, 50% 100%);
+    clip-path: polygon(-88vw 0, calc(100% + 88vw) 0, 50% 100%);
  
 }
 .innerShadow {
