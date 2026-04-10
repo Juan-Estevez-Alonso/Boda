@@ -269,20 +269,24 @@ export default function Page() {
               <RevealOnce className="revealPadding">
                 <p className="p" style={{ marginTop: 0 }}>
                   Lo más importante es que vengas y lo pases brutal. Pero si te apetece ayudarnos con la luna de miel, la boda, la casa, los niños(que ya vendrán) o lo que tú quieras... 
-                  aquí tienes la opción más cómoda.  😄
+                  aquí tienes la opciones más cómoda.  😄
                 </p>
 
                 <div className="card" style={{ padding: 16 }}>
                   <div className="kicker">Transferencia / Bizum</div>
-                  <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
-                    <Row title="IBAN" value="ES46 2100 7147 3202 0017 3587" />
+                  <div style={{ marginTop: 10, display: "grid", gap: 10 }}> 
+                    <Row title="IBAN" value="Por motivos de seguridad, no se muestra el IBAN en la WEB. Pídelo por whatsapp si lo necesitas." />                  
                     <Row title="Titular" value="Juan Estévez Alonso o Mariana Pérez García" />
-                    <Row title="Concepto" value="Boda M&J" />
+                    <Row title="Concepto" value="Persona/s que hacen el regalo" />
                   </div>
 
                   <div className="help" style={{ marginTop: 10 }}>
                     (Pon lo que quieras. De verdad. Aquí no se juzga. O si... 😌)
                   </div>
+
+                  <div className="help" style={{ marginTop: 10, fontWeight: "bold" }}>
+                    * Si os gusta la opción tradicional como el sobre, nos os preocupéis, a nosotros también. 😅
+                  </div>                
                 </div>
 
                 <div style={{ height: 12 }} />
@@ -292,8 +296,8 @@ export default function Page() {
               <RevealOnce className="revealPadding">
                 <div className="kicker">Para los detallistas</div>
                 <p className="p" style={{ marginTop: 10 }}>
-                  Si prefieres algo “de toda la vida”, un sobre, una sorpresa o un detalle personal… también nos encanta.
-                  Solo prométenos que no será una batidora industrial 😅
+                  Si prefieres algo “de toda la vida”, una sorpresa o un detalle personal… también nos encanta.
+                  Solo prométenos que no será una batidora o un exprimidor 😅
                 </p>
 
                 {/* Slot foto */}
