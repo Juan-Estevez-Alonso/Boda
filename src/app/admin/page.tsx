@@ -1,10 +1,7 @@
 import React from "react";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseServer } from "@/lib/supabase-server";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = getSupabaseServer();
 
 export default async function AdminPage() {
   const { data: songs, error: songsError } = await supabase

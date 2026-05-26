@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseServer, apiError } from "@/lib/supabase-server";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = getSupabaseServer();
 
 const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutos
 const RATE_LIMIT_MAX = 5;
@@ -45,7 +42,7 @@ export async function GET() {
     .limit(200);
 
   if (error) {
-    return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+    return apiError(error, "Error obteniendo RSVPs");
   }
 
   return NextResponse.json({ ok: true, data });
