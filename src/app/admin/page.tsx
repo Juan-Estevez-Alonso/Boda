@@ -1,9 +1,12 @@
 import React from "react";
 import { getSupabaseServer } from "@/lib/supabase-server";
 
-const supabase = getSupabaseServer();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminPage() {
+  const supabase = getSupabaseServer();
+
   const { data: songs, error: songsError } = await supabase
     .from("songs")
     .select("id, created_at, name, song, artist, note, likes")
