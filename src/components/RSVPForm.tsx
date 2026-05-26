@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import RevealOnce from "@/components/RevealOnce";
 
 type Status = "idle" | "sending" | "ok" | "error";
@@ -7,6 +8,11 @@ type Status = "idle" | "sending" | "ok" | "error";
 export default function RSVPForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState("");
+  const [ts, setTs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setTs(Date.now());
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -15,14 +21,13 @@ export default function RSVPForm() {
 
     const formEl = e.currentTarget;
     const fd = new FormData(formEl);
-    const [ts] = useState(Date.now());
 
     const payload = {
       name: String(fd.get("name") ?? "").trim(),
       attendance: String(fd.get("attendance") ?? "").trim(),
       allergies: String(fd.get("allergies") ?? "").trim(),
-      website: fd.get("website"), // honeypot
-      ts, // timestamp para validación anti-bot
+      website: String(fd.get("website") ?? "").trim(),
+      ts: ts ?? Date.now() - 3000,
     };
 
     try {
@@ -49,13 +54,13 @@ export default function RSVPForm() {
 
   return (
     <form onSubmit={onSubmit} className="" style={{ padding: 16 }}>
-      {/* honeypot */}
       <input
         type="text"
         name="website"
         style={{ display: "none" }}
         autoComplete="off"
       />
+
       <div className="grid2">
         <RevealOnce className="field">
           <label className="help">Nombre y apellido</label>
@@ -84,6 +89,7 @@ export default function RSVPForm() {
       </RevealOnce>
 
       <div style={{ height: 14 }} />
+
       <RevealOnce>
         <button className="btn btnPrimary" disabled={status === "sending"}>
           {status === "sending" ? "Enviando..." : "Confirmar asistencia"}
