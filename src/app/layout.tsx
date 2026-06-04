@@ -2,12 +2,35 @@ import "./globals.css";
 import localFont from "next/font/local";
 
 export const metadata = {
+  metadataBase: new URL("https://www.bodamarianayjuan.es"),
+
   title: "Mariana & Juan — 03.10.2026",
   description: "Boda de Mariana & Juan. 3 de Octubre de 2026 en Isla Cristina.",
+
   icons: {
     icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
+
+  openGraph: {
+    title: "Mariana & Juan — 03.10.2026",
+    description: "Boda de Mariana & Juan. 3 de Octubre de 2026 en Isla Cristina.",
+    url: "https://www.bodamarianayjuan.es/",
+    siteName: "Boda Mariana y Juan",
+    images: [
+      {
+        url: "/portada.jpeg",
+        width: 1200,
+        height: 630,
+        alt: "Boda de Mariana y Juan",
+      },
+    ],
+    locale: "es_ES",
+    type: "website",
+  }
+  
 };
 
 const laLuxes = localFont({
