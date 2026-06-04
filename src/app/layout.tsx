@@ -1,7 +1,8 @@
 import "./globals.css";
 import localFont from "next/font/local";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL("https://www.bodamarianayjuan.es"),
 
   title: "Mariana & Juan — 03.10.2026",
@@ -43,12 +44,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {/* <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;700&family=Inter:wght@400;500;600&display=swap"
           rel="stylesheet"
-        />
+        /> */}
       </head>
       <body className={laLuxes.variable}>{children}</body>
     </html>
