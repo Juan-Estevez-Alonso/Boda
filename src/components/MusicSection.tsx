@@ -190,6 +190,61 @@ export default function SongRequests() {
       <div className="card" style={{ padding: 16 }}>
         <div className="kicker">Lista de temazos</div>
 
+        {/* Contenedor con scroll y altura máxima */}
+        <div 
+          style={{ 
+            display: "grid", 
+            gap: 10, 
+            marginTop: 10,
+            maxHeight: "400px", // Puedes ajustar esta altura según lo que necesites (ej. 300px, 500px, etc.)
+            overflowY: "auto",   // Activa el scroll vertical solo cuando haga falta
+            paddingRight: 4      // Opcional: un pequeño espacio para que la barra no pegue con las tarjetas
+          }}
+        >
+          {items.length === 0 && (
+            <div className="help">Aún no hay propuestas… alguien tiene que romper el hielo 👀</div>
+          )}
+
+          {/* Quitamos el .slice(0, 12) para que pasen todos los items */}
+          {items.map((s) => (
+            <div key={s.id} className="card" style={{ padding: 12, boxShadow: "none" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ fontWeight: 700 }}>
+                  {s.song}
+                  {s.artist ? <span className="help"> — {s.artist}</span> : null}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleLike(s.id)}
+                  className="btn"
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 12,
+                    background: "rgba(255,255,255,.75)",
+                    boxShadow: "none",
+                  }}
+                  aria-label="Dar like"
+                  title="Dar like"
+                >
+                  ❤️ {s.likes ?? 0}
+                </button>
+              </div>
+
+              <div className="help">
+                — {s.name ? s.name : "Anónimo"}
+                {s.note ? <> · “{s.note}”</> : null}
+              </div>
+            </div>
+          ))}
+
+          {/* Como ya se muestran todos, ya no hace falta el aviso de "...y X más" */}
+        </div>
+      </div>
+
+      {/*<div className="card" style={{ padding: 16 }}>
+        <div className="kicker">Lista de temazos</div>
+
         <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
           {items.length === 0 && (
             <div className="help">Aún no hay propuestas… alguien tiene que romper el hielo 👀</div>
@@ -229,7 +284,7 @@ export default function SongRequests() {
 
           {items.length > 12 && <div className="help">…y {items.length - 12} más. Esto pinta muy bien.</div>}
         </div>
-      </div>
+      </div>*/}
     </div>
   );
 }
